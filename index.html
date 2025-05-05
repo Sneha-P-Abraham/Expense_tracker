@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget App Website</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/scrollreveal"></script>
+    <script src="https://cdn.jsdelivr.net/npm/counterup2@2.0/dist/index.umd.min.js"></script>
+    <style>
+        /* style.css - Embedded within HTML */
+
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: #1e1e1e; /* Dark background */
+            color: #f0e6d4; /* Light text color */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+      .app-container {
+            width: 375px; /* Mimic mobile screen width */
+            background-color: #2c2c2c; /* Slightly lighter container background */
+            border-radius: 20px;
+            overflow: hidden; /* To contain rounded corners */
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 20px; /* Space for bottom nav */
+        }
+
+        header {
+            padding: 20px;
+            text-align: left;
+        }
+
+        header h1 {
+            margin-bottom: 0;
+            font-size: 2.5em; /* Increased font size here */
+            font-weight: normal;
+        }
+
+        header p {
+            margin-top: 5px;
+            color: #d0d0d0;
+        }
+
+        /* Widgets (Account and Budget boxes) - only on Home page */
+      .widgets {
+            display: flex;
+            justify-content: space-around;
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+
+      .widget {
+            background-color: #3a3a3a; /* Widget background color */
+            border-radius: 15px;
+            padding: 20px;
+            width: 45%; /* Adjust as needed */
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none; /* Remove default link underline */
+            color: inherit; /* Keep text color from parent */
+        }
+
+      .widget i {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: #f0e6d4; /* Icon color */
+        }
+
+      .widget p {
+            margin: 0;
+            font-weight: bold;
+        }
+
+        /* Chart Container - only on Home page */
+      .chart-container {
+            padding: 20px;
+            background-color: #3a3a3a; /* Chart area background */
+            border-radius: 15px;
+            margin: 0 20px 20px 20px;
+            position: relative; /* For absolute positioning of add button */
+            height: 200px; /* Adjusted height to accommodate Chart.js chart */
+            display: flex; /* Added flex display to center canvas */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+        }
+
+      .chart-header {
+            text-align: left;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+      .chart-header p { /* Reduced font size for chart value header */
+            font-size: 0.9em;
+        }
+
+
+      .chart-canvas {
+            width: 100%; /* Canvas takes full width of container */
+            height: 100%; /* Canvas takes full height of container */
+            min-height: 150px; /* Ensure canvas is at least 150px high */
+        }
+
+
+      .chart-labels {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+            color: #d0d0d0;
+            font-size: 0.8em; /* Slightly smaller labels */
+            display: none; /* Hide the old labels */
+        }
+
+      .add-button {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: #b8860b; /* Button background color - golden brown */
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+
+        /* Bottom Navigation */
+      .bottom-nav {
+            background-color: #2c2c2c; /* Bottom nav background */
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 20px;
+            border-top: 1px solid #555;
+            position: relative; /* To position nav items */
+        }
+
+      .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #d0d0d0;
+            text-decoration: none;
+        }
+
+      .nav-item.active {
+            color: #f0e6d4; /* Active nav item color */
+        }
+
+      .nav-item.active i {
+            color: #f0e6d4; /* Active nav icon color - if needed to be different */
+        }
+
+
+      .nav-item i {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+            color: #d0d0d0; /* Inactive nav icon color */
+        }
+
+      .nav-item span {
+            font-size: 0.8em;
+        }
+
+        /* Budget Overview Section Styles */
+        .budget-overview-section { /* Added budget-overview-section */
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 15px;
+            background-color: #444;
+            margin: 0 20px 20px 20px;
+        }
+
+        .section-header { /* Reused from your existing styles, ensure no conflicts */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .section-header h2 { /* Reused from your existing styles */
+            margin: 0;
+            font-size: 1.3em;
+            font-weight: normal;
+        }
+
+        .view-all-link { /* Reused from your existing styles */
+            color: #b8860b;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
+        .budget-list { /* Added budget-list styles, similar to account-list */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .budget-item { /* Added budget-item styles, similar to account-item */
+            background-color: #555;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .budget-details { /* Added budget-details styles, similar to account-details */
+            text-align: left;
+            flex-grow: 1;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .budget-name { /* Added budget-name styles, similar to account-name */
+            margin: 0 0 5px 0;
+            font-weight: bold;
+        }
+
+        .budget-amount { /* Added budget-amount styles, similar to account-balance */
+            text-align: right;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .budget-period { /* Added budget-period styles, similar to account-type */
+            font-size: 0.8em;
+            color: #d0d0d0;
+        }
+
+        /* Budget Progress Bar Styles - for index page */
+        .budget-progress-container {
+            background-color: #444;
+            border-radius: 10px;
+            height: 15px; /* Increased height */
+            width: 100%; /* Full width of its container */
+            position: relative; /* For percentage overlay */
+            margin-top: 5px; /* Space between text and progress bar */
+            overflow: hidden; /* Clip rounded corners */
+        }
+
+        .budget-progress-bar-home {
+            background-color: #b8860b; /* Orange color */
+            height: 100%;
+            width: 0%; /* Initial width to 0 for animation */
+            border-radius: 10px; /* Rounded corners */
+            transition: width 1s ease-in-out; /* Animation for width change */
+        }
+
+        .budget-progress-percentage-home {
+            position: absolute;
+            top: 50%;
+            right: 5px; /* Adjust position as needed */
+            transform: translateY(-50%);
+            color: #f0e6d4; /* White color for percentage text */
+            font-size: 0.7em; /* Adjust size as needed */
+        }
+
+        .budget-suggestion-home {
+            font-size: 0.8em; /* Smaller suggestion text */
+            color: #d0d0d0;
+            text-align: left; /* Align suggestion text to the left */
+        }
+
+        .budget-remaining-home {
+            font-size: 0.9em;
+            color: #00a86b; /* Green color for remaining amount */
+            text-align: right;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .budget-list-progress-info {
+            width: 100%; /* Added to ensure progress info takes full width */
+            position: relative; /* Needed for absolute positioning of remaining amount */
+        }
+
+        /* Balance Pop-up Styles */
+        .balance-popup {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        .balance-popup-content {
+            background-color: #3a3a3a; /* Widget background color */
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 15px;
+            width: 80%; /* Could be more or less, depending on screen size */
+            max-width: 300px; /* Limit max width */
+             position: relative; /* For close button positioning */
+        }
+
+        .balance-popup-close {
+            color: #aaa;
+            position: absolute;
+            top: 0;
+            right: 10px;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .balance-popup-close:hover,
+        .balance-popup-close:focus {
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .balance-popup-content h2, .balance-popup-content p {
+            color: #f0e6d4;
+            text-align: center;
+        }
+
+         /* Editable Header Styles */
+        header h1, header p {
+            display: flex;
+            align-items: center; /* Vertically align text and input */
+        }
+
+        header h1 input[type="text"], header p input[type="text"] {
+            background: none; /* Transparent background */
+            border: none;
+            color: inherit; /* Inherit text color from header */
+            font-family: inherit; /* Inherit font family */
+            font-size: inherit; /* Inherit font size */
+            font-weight: inherit; /* Inherit font weight */
+            outline: none; /* Remove focus outline */
+            margin: 0; /* Reset margins */
+            padding: 0; /* Reset padding */
+            width: auto; /* Adjust width to content */
+            min-width: 50px; /* Minimum width to avoid collapsing */
+            flex-grow: 1; /* Allow input to take available space */
+            text-align: left; /* Keep text alignment consistent */
+            position: relative;
+            top: -2px; /* Minor adjustment for vertical alignment */
+        }
+        header p input[type="text"] {
+            font-weight: normal; /* Revert to normal font-weight for <p> input if needed */
+            font-size: 0.9em; /* Adjust size if needed */
+            color: #d0d0d0;
+        }
+        header h1 input[type="text"] {
+            font-size: 1.8em;
+        }
+
+        /* Glow effect class with animation */
+        .glowing-container {
+            box-shadow: 0 0 15px 5px rgba(184, 134, 11, 0.3); /* Base glow, slightly less intense */
+            background-image: linear-gradient(45deg, transparent 10%, rgba(184, 134, 11, 0.7) 50%, transparent 90%); /* Define the streak */
+            background-size: 300% 300%; /* Make gradient larger than container */
+            background-position: 0% 50%; /* Start position */
+            animation: glowing-streak 5s linear infinite; /* Apply animation */
+        }
+
+        @keyframes glowing-streak {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1 id="header-title-container"></h1>
+            <p><input type="text" id="headerName" value="Boby John" placeholder="Your Name"></p>
+        </header>
+
+        <section class="budget-overview-section glowing-container">
+            <div class="section-header">
+                <h2>Budgets Overview</h2>
+                <a href="budget.html" class="view-all-link">View All</a>
+            </div>
+            <div class="budget-list" id="budget-overview-list">
+                <p>No budgets yet</p>
+            </div>
+        </section>
+
+        <section class="widgets">
+            <div class="widget account-widget glowing-container">  <i class="fa-solid fa-wallet"></i>
+                <p>Account</p>
+            </div>
+            <a href="budget.html" class="widget budget-widget glowing-container"> <i class="fa-solid fa-chart-pie"></i>
+                <p>Budget</p>
+            </a>
+        </section>
+
+        <section class="chart-container glowing-container">
+            <div class="chart-header">
+                <p id="chart-value" class="counter">$0.00</p>
+            </div>
+            <canvas class="chart-canvas" id="dailyTransactionChart"></canvas>
+            <div class="chart-labels" id="chart-date-labels" style="display:none;"></div>
+            <a href="transaction.html" class="add-button">+</a>
+        </section>
+
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-item active">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </a>
+            <a href="transaction.html" class="nav-item">
+                <i class="fa-solid fa-receipt"></i>
+                <span>Transactions</span>
+            </a>
+            <a href="budget.html" class="nav-item">
+                <i class="fa-solid fa-list-check"></i>  <span>Budgets</span>
+            </a>
+            <a href="more.html" class="nav-item">
+                <i class="fa-solid fa-ellipsis-h"></i>
+                <span>More</span>
+            </a>
+        </nav>
+    </div>
+
+    <div id="balancePopup" class="balance-popup">
+        <div class="balance-popup-content">
+            <span class="balance-popup-close">&times;</span>
+            <h2>Account Balance</h2>
+            <p id="popupBalanceValue" class="counter">$0.00</p>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Counter-Up/1.0.0/jquery.counterup.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load transactions from local storage
+            let transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+            console.log('Transactions data loaded:', transactions);
+
+            const canvas = document.getElementById('dailyTransactionChart');
+            const ctx = canvas.getContext('2d');
+            const chartValueHeader = document.getElementById('chart-value');
+            const budgetOverviewList = document.getElementById('budget-overview-list');
+            const accountWidget = document.querySelector('.account-widget'); // Get account widget
+            const balancePopup = document.getElementById('balancePopup'); // Get the popup
+            const popupBalanceValue = document.getElementById('popupBalanceValue'); // Get balance display in popup
+            const popupCloseButton = document.querySelector('.balance-popup-close'); // Get close button
+
+            // Header name inputs
+            const headerTitleContainer = document.getElementById('header-title-container');
+            const headerNameInput = document.getElementById('headerName');
+            const headerTitleText = "Hello there"; // Text to type
+
+
+            // Typing animation function
+            function টাইপরাইটার(element, text, speed) {
+                let i = 0;
+                function টাইপ() {
+                    if (i < text.length) {
+                        element.innerHTML += text.charAt(i);
+                        i++;
+                        setTimeout(টাইপ, speed);
+                    }
+                }
+                টাইপ();
+            }
+
+            // Start typing animation
+            টাইপরাইটার(headerTitleContainer, headerTitleText, 100); // 100ms delay for typing effect
+
+
+            // Load header names from local storage
+            headerNameInput.value = localStorage.getItem('headerName') || 'Name';
+
+            // Save header names to local storage on change
+            headerNameInput.addEventListener('change', function() {
+                localStorage.setItem('headerName', this.value);
+            });
+
+
+            // Function to calculate total balance
+            function calculateBalance(transactions) {
+                let totalIncome = 0;
+                let totalExpense = 0;
+                transactions.forEach(transaction => {
+                    let amount = parseFloat(transaction.amount);
+                    if (!isNaN(amount)) {
+                        if (transaction.type === 'income') {
+                            totalIncome += amount;
+                        } else if (transaction.type === 'expense') {
+                            totalExpense += amount;
+                        }
+                    }
+                });
+                return totalIncome - totalExpense;
+            }
+
+
+            // Calculate total value for chart - unchanged
+            let totalValue = 0;
+            if (transactions && Array.isArray(transactions)) {
+                transactions.forEach(transaction => {
+                    let amount = parseFloat(transaction.amount);
+                    if (!isNaN(amount)) {
+                        if (transaction.type === 'expense') {
+                            amount = -amount; // Make expense amounts negative for total value calculation
+                        }
+                        totalValue += amount;
+                    } else {
+                        console.warn('Invalid transaction amount found:', transaction.amount);
+                    }
+                });
+            }
+            chartValueHeader.textContent = `$${totalValue.toFixed(2)}`;
+
+            // Prepare chart data - unchanged
+            const labels = [];
+            const dailyIncomeAmounts = new Array(31).fill(0); // Separate array for income
+            const dailyExpenseAmounts = new Array(31).fill(0); // Separate array for expense
+            const startDate = transactions.length > 0 ?
+                new Date(Math.min(...transactions.map(t => new Date(t.date).getTime()))) :
+                new Date();
+
+            for (let i = 0; i <= 30; i++) {
+                const currentDate = new Date(startDate);
+                currentDate.setDate(startDate.getDate() + i);
+                labels.push(currentDate.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric'
+                }));
+
+                let dailyIncomeTotal = 0;
+                let dailyExpenseTotal = 0;
+                transactions.forEach(transaction => {
+                    let amount = parseFloat(transaction.amount); // Parse amount again inside daily loop
+                    if (!isNaN(amount)) {
+                        const transDate = new Date(transaction.date);
+                        if (transDate.toDateString() === currentDate.toDateString()) {
+                            if (transaction.type === 'income') {
+                                dailyIncomeTotal += amount; // Add to income total
+                            } else if (transaction.type === 'expense') {
+                                dailyExpenseTotal += amount; // Add to expense total
+                            }
+                        }
+                    }
+                });
+                dailyIncomeAmounts[i] = dailyIncomeTotal;
+                dailyExpenseAmounts[i] = -dailyExpenseTotal; // Make expense amounts negative for chart display
+            }
+
+            // Create chart with two datasets - unchanged
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Daily Income',
+                            data: dailyIncomeAmounts,
+                            borderColor: '#00a86b', // Green for income
+                            borderWidth: 2,
+                            pointRadius: 2, // Further reduced point radius
+                            pointBackgroundColor: '#00a86b',
+                            pointBorderColor: '#00a86b',
+                            segment: {
+                                borderColor: '#00a86b',
+                                borderWidth: 2,
+                            },
+                            fill: false,
+                            tension: 0
+                        },
+                        {
+                            label: 'Daily Expenses',
+                            data: dailyExpenseAmounts,
+                            borderColor: '#e24040', // Red for expense
+                            borderWidth: 2,
+                            pointRadius: 2, // Further reduced point radius
+                            pointBackgroundColor: '#e24040',
+                            pointBorderColor: '#e24040',
+                            segment: {
+                                borderColor: '#e24040',
+                                borderWidth: 2,
+                            },
+                            fill: false,
+                            tension: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                grid: { color: '#555' },
+                                ticks: { color: '#d0d0d0', font: { size: 8 } } // Further reduced x-axis tick font size
+                            },
+                            y: {
+                                position: 'left',
+                                beginAtZero: false, // y-axis will adjust to include negative values
+                                grace: '15%',
+                                grid: {
+                                    color: '#555',
+                                    lineWidth: function(context) {
+                                        return context.tick.value === 0 ? 2 : 1;
+                                    }
+                                },
+                                ticks: {
+                                    color: '#d0d0d0',
+                                    font: { size: 8 }, // Further reduced y-axis tick font size
+                                    callback: function(value) {
+                                        return '$' + value.toFixed(2);
+                                    }
+                                },
+                                border: {
+                                    display: true,
+                                    color: '#555'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true, // Show legend to differentiate income and expenses
+                                labels: {
+                                    color: '#d0d0d0', // Legend text color
+                                    font: { size: 8 } // Further reduced legend font size
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: $${context.parsed.y.toFixed(2)}`;
+                                    },
+                                    titleFont: { size: 10 }, // Further reduced tooltip title font size
+                                    bodyFont: { size: 10 }   // Further reduced tooltip body font size
+                                }
+                            },
+                            layout: {
+                                padding: { // Increased padding to further reduce chart size
+                                    left: 15,
+                                    right: 15,
+                                    top: 5,
+                                    bottom: 5
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Load budgets from local storage - unchanged
+            let budgets = JSON.parse(localStorage.getItem('budgets') || '[]');
+            console.log('Budget data loaded:', budgets);
+
+
+            budgetOverviewList.innerHTML = ''; // Clear placeholder or previous budgets
+            const noBudgetMessage = document.createElement('p');
+            noBudgetMessage.textContent = 'No budgets yet';
+
+            if (budgets.length === 0) {
+                budgetOverviewList.appendChild(noBudgetMessage);
+                noBudgetMessage.style.display = 'block';
+            } else {
+                noBudgetMessage.style.display = 'none';
+                budgets.forEach(budget => {
+                    const budgetItem = document.createElement('div');
+                    budgetItem.classList.add('budget-item', 'glowing-container'); // ADDED glowing-container class here
+
+                    // Budget Details Div (Name and Type/Period) - unchanged
+                    const detailsDiv = document.createElement('div');
+                    detailsDiv.classList.add('budget-details');
+                    detailsDiv.innerHTML = `
+                        <p class="budget-name">${budget.name}</p>
+                        <span class="budget-period">${budget.type} - ${formatDate(new Date(budget.startDate))} to ${formatDate(new Date(budget.endDate))}</span>
+                    `;
+                    budgetItem.appendChild(detailsDiv);
+
+                    // Budget Progress Info Container (Progress bar, percentage, suggestion) - unchanged
+                    const progressInfoDiv = document.createElement('div');
+                    progressInfoDiv.classList.add('budget-list-progress-info');
+
+                    // Calculate total expenses for this budget - unchanged
+                    const storedTransactions = localStorage.getItem('transactions');
+                    const transactions = storedTransactions ? JSON.parse(storedTransactions) : [];
+                    let totalExpenses = 0;
+                    const budgetStartDate = new Date(budget.startDate); // Budget start date
+                    const budgetEndDate = new Date(budget.endDate);     // Budget end date
+
+
+                    // Filter transactions to include only 'expense' type AND 'expense' transaction type AND within the budget month/year - unchanged
+                    const filteredTransactions = transactions.filter(transaction => {
+                        if (budget.type === 'expense budget' && transaction.type === 'expense') {
+                            const transactionDate = new Date(transaction.date);
+                            // Check if transaction is within the budget's month and year
+                            return transactionDate >= budgetStartDate && transactionDate <= budgetEndDate &&
+                                   transactionDate.getMonth() === budgetStartDate.getMonth() && transactionDate.getFullYear() === budgetStartDate.getFullYear();
+                        }
+                        return false; // Exclude if not expense budget or not expense type
+                    });
+
+
+                    filteredTransactions.forEach(transaction => {
+                        if (transaction.type === 'expense') {
+                            totalExpenses += parseFloat(transaction.amount);
+                        }
+                    });
+
+                    const remainingAmount = budget.amount - totalExpenses;
+
+
+                    // Progress Bar - unchanged
+                    const progressDiv = document.createElement('div');
+                    progressDiv.classList.add('budget-progress-container');
+                    const progressBar = document.createElement('div');
+                    progressBar.classList.add('budget-progress-bar-home');
+
+                    let progressPercentage = 0;
+                    if (budget.amount > 0) {
+                        progressPercentage = ((totalExpenses / budget.amount) * 100).toFixed(0);
+                        if (progressPercentage > 100) progressPercentage = 100; // Cap at 100%
+                    }
+
+                    // Animate progress bar width
+                    requestAnimationFrame(() => {
+                        progressBar.style.width = `${progressPercentage}%`;
+                    });
+
+
+                    progressDiv.appendChild(progressBar);
+                    const percentageSpan = document.createElement('span');
+                    percentageSpan.classList.add('budget-progress-percentage-home');
+                    percentageSpan.textContent = `${progressPercentage}%`;
+                    progressDiv.appendChild(percentageSpan);
+                    progressInfoDiv.appendChild(progressDiv);
+
+
+                    // Suggestion Text - unchanged
+                    const suggestionP = document.createElement('p');
+                    suggestionP.classList.add('budget-suggestion-home');
+                    suggestionP.textContent = budget.daysLeft > 0 ? `Suggest: $${budget.dailyAmount}/day for ${budget.daysLeft} days` : 'Budget period ended';
+                    progressInfoDiv.appendChild(suggestionP);
+
+                    budgetItem.appendChild(progressInfoDiv); // Append progress info to budget item
+
+                     // Remaining Amount Display - Moved to progress info div in budget.html, keep it in progress info for index too for consistency - unchanged
+                    const remainingAmountDiv = document.createElement('div');
+                    remainingAmountDiv.classList.add('budget-remaining-home', 'counter'); // Added counter class
+                    remainingAmountDiv.textContent = `Left: $${remainingAmount.toFixed(2)} of $${budget.amount}`; // Display remaining amount and budget amount
+                    progressInfoDiv.appendChild(remainingAmountDiv); //  append remaining amount in index.html
+
+
+                    budgetOverviewList.appendChild(budgetItem);
+                });
+            }
+
+             // Account widget click event listener
+            accountWidget.addEventListener('click', function() {
+                const balance = calculateBalance(transactions);
+                popupBalanceValue.textContent = '$' + balance.toFixed(2); // Set balance in popup
+                popupBalanceValue.classList.add('counter'); // Add counter class dynamically before setting text
+                balancePopup.style.display = "block"; // Show popup
+                const counterUp = new CounterUp(popupBalanceValue, { delay: 10, time: 3000 }); // Initialize counter up here with 3 seconds
+                counterUp.start(); // Start counter up animation
+            });
+
+            // Close button event listener
+            popupCloseButton.addEventListener('click', function() {
+                balancePopup.style.display = "none"; // Hide popup
+            });
+
+            // Optional: Close popup when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target == balancePopup) {
+                    balancePopup.style.display = "none";
+                }
+            });
+
+            // Initialize ScrollReveal
+            ScrollReveal({ reset: true });
+
+            // Apply ScrollReveal animations to sections and elements
+            ScrollReveal().reveal('.header', { delay: 200, duration: 500, origin: 'top', distance: '20px' });
+            ScrollReveal().reveal('.budget-overview-section', { delay: 300, duration: 700, origin: 'left', distance: '50px' });
+            ScrollReveal().reveal('.widgets', { delay: 500, duration: 700, origin: 'bottom', distance: '50px', interval: 200 });
+            ScrollReveal().reveal('.chart-container', { delay: 700, duration: 900, origin: 'right', distance: '50px' });
+            ScrollReveal().reveal('.budget-item', { delay: 200, duration: 700, origin: 'bottom', distance: '20px', interval: 100 });
+            ScrollReveal().reveal('.bottom-nav', { delay: 400, duration: 700, origin: 'bottom', distance: '20px' });
+
+            // Initialize CounterUp for chart value
+            const counterUpChartValue = new CounterUp(chartValueHeader, { delay: 10, time: 3000 }); // Set time to 3 seconds
+            counterUpChartValue.start();
+
+            const counterElements = document.querySelectorAll('.counter');
+            counterElements.forEach(element => {
+                if (element.id !== 'popupBalanceValue') { // popupBalanceValue is handled separately on click
+                    const counterUp = new CounterUp(element, { delay: 10, time: 3000 }); // Set time to 3 seconds
+                    counterUp.start();
+                }
+            });
+
+             // Initialize CounterUp for budget remaining amounts in budget overview
+             document.querySelectorAll('.budget-remaining-home.counter').forEach(element => { // Target budget overview counters
+                $('.budget-remaining-home.counter').counterUp({
+                  delay: 10,
+                  time: 1000
+                });
+            });
+
+
+        });
+
+        function formatDate(date) {
+            return date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+        }
+    </script>
+
+</body>
+</html>
