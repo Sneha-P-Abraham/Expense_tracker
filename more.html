@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>More - Budget App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/scrollreveal"></script> <style>
+        /* style.css - Embedded within HTML */
+        html, body {
+            height: auto;
+            overflow-y: auto;
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: #1e1e1e;
+            color: #f0e6d4;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+      .app-container {
+            width: 375px;
+            background-color: #2c2c2c;
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 60px; /* Added padding to the bottom to accommodate bottom nav */
+            box-sizing: border-box; /* Include padding in the element's total width and height */
+        }
+
+        header {
+            padding: 20px;
+            text-align: left;
+        }
+
+        header h1 {
+            margin-bottom: 0;
+            font-size: 1.8em;
+            font-weight: normal;
+        }
+
+        header p {
+            margin-top: 5px;
+            color: #d0d0d0;
+        }
+
+      .chart-filter {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 20px;
+        }
+
+      .chart-filter-button {
+            background: none;
+            border: 1px solid #555;
+            color: #d0d0d0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+      .chart-filter-button.active {
+            background-color: #b8860b;
+            border-color: #b8860b;
+            color: #fff;
+        }
+
+
+      .chart-container {
+            background-color: #3a3a3a;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+
+        /* Bottom Navigation */
+      .bottom-nav {
+            background-color: #2c2c2c;
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 20px;
+            border-top: 1px solid #555;
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 375px;
+        }
+
+      .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #d0d0d0;
+            text-decoration: none;
+        }
+
+      .nav-item.active {
+            color: #f0e6d4;
+        }
+
+      .nav-item.active i {
+            color: #f0e6d4;
+        }
+
+
+      .nav-item i {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+            color: #d0d0d0;
+        }
+
+      .nav-item span {
+            font-size: 0.8em;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header data-sr-reveal="enter top">
+            <h1>More</h1>
+        </header>
+
+        <section class="chart-filter" data-sr-reveal="enter bottom">
+            <button class="chart-filter-button active" data-filter="expense" id="expenseFilter">Outgoings</button>
+            <button class="chart-filter-button" data-filter="income" id="incomeFilter">Incomings</button>
+        </section>
+
+
+        <section class="chart-container" data-sr-reveal="enter bottom">
+            <canvas id="transactionChart"></canvas>
+        </section>
+
+
+        <nav class="bottom-nav" data-sr-reveal="enter bottom">
+            <a href="index.html" class="nav-item">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </a>
+            <a href="transaction.html" class="nav-item">
+                <i class="fa-solid fa-receipt"></i>
+                <span>Transactions</span>
+            </a>
+            <a href="budget.html" class="nav-item">
+                <i class="fa-solid fa-list-check"></i>  <span>Budgets</span>
+            </a>
+            <a href="more.html" class="nav-item active">
+                <i class="fa-solid fa-ellipsis-h"></i>
+                <span>More</span>
+            </a>
+        </nav>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const transactionChartCanvas = document.getElementById('transactionChart').getContext('2d');
+            let transactionChart;
+            let transactions = []; // Initialized transactions as an empty array
+            let currentFilter = 'expense'; // Default filter is expense
+
+             // Category icon mapping and colors
+             const categoryIcons = {
+                'Dining': 'fa-solid fa-utensils',
+                'Shopping': 'fa-solid fa-shopping-cart',
+                'Transit': 'fa-solid fa-bus',
+                'Entertainment': 'fa-solid fa-film',
+                'Bills & Fees': 'fa-solid fa-file-invoice-dollar',
+                'Gifts': 'fa-solid fa-gift',
+                'Beauty': 'fa-solid fa-heart',
+                'Work': 'fa-solid fa-briefcase',
+                'Travel': 'fa-solid fa-plane',
+                'Income': 'fa-solid fa-money-bill-wave'
+            };
+
+            const categoryColors = {
+                'Dining': '#FF6384',
+                'Shopping': '#36A2EB',
+                'Transit': '#FFCE56',
+                'Entertainment': '#4BC0C0',
+                'Bills & Fees': '#9966FF',
+                'Gifts': '#E7E9ED',
+                'Beauty': '#C9CBCF',
+                'Work': '#2A7886',
+                'Travel': '#A1C349',
+                'Income': '#00a86b' // Green for income
+            };
+
+
+            function loadTransactions() {
+                const storedTransactions = localStorage.getItem('transactions');
+                if (storedTransactions) {
+                    transactions = JSON.parse(storedTransactions);
+                }
+            }
+
+            function updateChart(filterType = 'expense') {
+                const filteredTransactions = transactions.filter(transaction => transaction.type === filterType);
+                const categoryData = {};
+
+                filteredTransactions.forEach(transaction => {
+                    if (categoryData[transaction.category]) {
+                        categoryData[transaction.category] += parseFloat(transaction.amount);
+                    } else {
+                        categoryData[transaction.category] = parseFloat(transaction.amount);
+                    }
+                });
+
+                const labels = Object.keys(categoryData);
+                const dataValues = Object.values(categoryData);
+                const backgroundColors = labels.map(category => categoryColors[category] || '#d0d0d0');
+
+                if (transactionChart) {
+                    transactionChart.destroy();
+                }
+
+                transactionChart = new Chart(transactionChartCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: dataValues,
+                            backgroundColor: backgroundColors,
+                            hoverOffset: 4,
+                            pointStyle: 'rectRounded',
+                            pointBackgroundColor: backgroundColors
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#f0e6d4',
+                                    usePointStyle: true
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: filterType.charAt(0).toUpperCase() + filterType.slice(1) + ' Categories',
+                                color: '#f0e6d4'
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Load transactions and initially display expense chart
+            loadTransactions();
+            updateChart(currentFilter);
+
+
+            // Filter button event listeners
+            const filterButtons = document.querySelectorAll('.chart-filter-button');
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.filter;
+                    updateChart(currentFilter);
+                });
+            });
+
+             // ScrollReveal Configuration
+             ScrollReveal({ reset: true }); // to reset animation every time element is revealed
+
+             ScrollReveal().reveal('header', { delay: 200, origin: 'top', distance: '50px' });
+             ScrollReveal().reveal('.chart-filter', { delay: 300, origin: 'bottom', distance: '50px' });
+             ScrollReveal().reveal('.chart-container', { delay: 400, origin: 'bottom', distance: '50px' });
+             ScrollReveal().reveal('.bottom-nav', { delay: 500, origin: 'bottom', distance: '50px' });
+
+
+        });
+    </script>
+</body>
+</html>
