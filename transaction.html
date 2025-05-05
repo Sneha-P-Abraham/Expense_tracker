@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions - Budget App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://unpkg.com/scrollreveal"></script>
+    <style>
+        /* style.css - Embedded within HTML */
+        html, body {
+            height: 100vh; /* Ensure full viewport height */
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: #1e1e1e; /* Dark background */
+            color: #f0e6d4; /* Light text color */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 375px; /* Mimic mobile screen width */
+            background-color: #2c2c2c; /* Slightly lighter container background */
+            border-radius: 20px;
+            overflow: hidden; /* To contain rounded corners */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* Make app-container take full viewport height */
+            position: relative; /* To allow absolute positioning of overlay and bottom nav if needed */
+        }
+
+        header {
+            padding: 20px;
+            text-align: left;
+        }
+
+        header h1 {
+            margin-bottom: 0;
+            font-size: 1.8em;
+            font-weight: normal;
+        }
+
+        header p {
+            margin-top: 5px;
+            color: #d0d0d0;
+        }
+
+        /* Transaction List Container */
+        .transaction-container {
+            padding: 0 20px;
+            margin-bottom: 20px;
+            flex-grow: 1; /* Allow transaction container to take available vertical space */
+            display: flex; /* Use flex to control vertical alignment of content */
+            flex-direction: column; /* Stack content vertically */
+            justify-content: flex-start; /* Align content to the top */
+        }
+
+        .transaction-list {
+            background-color: #3a3a3a; /* List background color */
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px; /* Increased min-height to give more visual space */
+            text-align: center;
+            color: #d0d0d0;
+            font-style: italic;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between; /* Distribute space between details, amount, and delete button */
+            align-items: center; /* Vertically center items in transaction list */
+            padding: 10px 0;
+            border-bottom: 1px solid #555;
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none; /* Remove border from last item */
+        }
+
+        .transaction-details {
+            text-align: left;
+            margin-right: 10px;
+            display: flex; /* Enable flex for icon and text */
+            align-items: center; /* Vertically center icon and text */
+            flex-grow: 1; /* Allow details to take up available space */
+        }
+
+        .transaction-details i {
+            margin-right: 8px; /* Spacing between icon and text */
+            color: #d0d0d0; /* Icon color in transaction list */
+            font-size: 1.2em; /* Adjust icon size in transaction list */
+        }
+
+
+        .transaction-details p {
+            margin: 0;
+            font-weight: bold;
+        }
+
+        .transaction-details span {
+            color: #d0d0d0;
+            font-size: 0.9em;
+        }
+
+        .transaction-amount {
+            font-weight: bold;
+            text-align: right;
+            margin-left: auto; /* Push amount to the center, between details and delete button */
+            margin-right: 10px; /* Add some spacing between amount and delete button */
+        }
+
+        .transaction-amount.income {
+            color: #00a86b; /* Example income color */
+        }
+
+        .transaction-amount.expense {
+            color: #e24040; /* Example expense color */
+        }
+
+        .delete-button {
+            background: none;
+            border: none;
+            color: #e24040; /* Red color for delete icon */
+            cursor: pointer;
+            font-size: 1.2em;
+            margin-left: auto; /* Push delete button to the right end */
+            display: flex; /* Use flexbox for alignment */
+            align-items: center; /* Vertically center the icon */
+            justify-content: center; /* Horizontally center the icon if needed */
+            height: 100%; /* Ensure button takes full height of transaction item for alignment */
+        }
+
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            background-color: #2c2c2c; /* Bottom nav background */
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 20px; /* Keep bottom nav padding consistent with index.html if different */
+            border-top: 1px solid #555;
+            position: fixed; /* Fixed position to the bottom */
+            bottom: 0; /* Stick to the bottom */
+            left: 50%; /* Center horizontally */
+            transform: translateX(-50%); /* Adjust for centering */
+            width: 375px; /* Match app container width */
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #d0d0d0;
+            text-decoration: none;
+        }
+
+        .nav-item.active {
+            color: #f0e6d4; /* Active nav item color */
+        }
+
+        .nav-item.active i {
+            color: #f0e6d4; /* Active nav icon color - if needed to be different */
+        }
+
+
+        .nav-item i {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+            color: #d0d0d0; /* Inactive nav icon color */
+        }
+
+        .nav-item span {
+            font-size: 0.8em;
+        }
+
+        .add-button {
+            background-color: #b8860b; /* Button background color - golden brown */
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: fixed; /* Fixed position */
+            bottom: 90px; /* Distance from the bottom, adjust as needed */
+            right: 20px; /* Distance from the right */
+            text-decoration: none; /* Remove underline from link */
+        }
+
+        /* Add Transaction Overlay Styles */
+        .add-transaction-overlay {
+            position: fixed; /* Stay in place */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 10; /* Ensure it's on top */
+        }
+
+        .add-transaction-container {
+            width: 375px; /* Match app container width */
+            background-color: #2c2c2c;
+            border-radius: 20px;
+            overflow: auto; /* Enable scroll if content overflows */
+            max-height: 90%; /* Limit height to screen */
+        }
+
+        /* Styles for content inside the overlay - reuse from add_transaction.html */
+        .overlay-header {
+            background-color: #3a3a3a;
+            padding: 15px 20px;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .overlay-header h1 {
+            margin: 0;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .overlay-header a {
+            color: #d0d0d0;
+            text-decoration: none;
+        }
+
+        .overlay-transaction-type {
+            display: flex;
+            justify-content: space-around;
+            background-color: #3a3a3a;
+            padding: 15px 20px;
+        }
+
+        .overlay-transaction-type-button {
+            background: none;
+            border: none;
+            color: #d0d0d0;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .overlay-transaction-type-button.active {
+            background-color: #b8860b; /* Highlight color when active */
+            color: #fff;
+        }
+
+        .overlay-amount-section {
+            background-color: #2c2c2c;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .overlay-amount-section input[type="number"] {
+            font-size: 2em;
+            margin: 10px 0;
+            width: 100%; /* Make input take full width */
+            padding: 0; /* Remove padding to align text properly */
+            border: none; /* Remove border */
+            background: none; /* Make background transparent */
+            color: #f0e6d4; /* Light text color */
+            text-align: center; /* Center the text */
+            appearance: textfield; /* Reset appearance for mobile browsers */
+            -webkit-appearance: textfield;
+            -moz-appearance: textfield;
+        }
+
+        /* Hide number input arrows in Chrome, Safari, Edge, and IE */
+        .overlay-amount-section input[type="number"]::-webkit-outer-spin-button,
+        .overlay-amount-section input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .overlay-amount-section input[type="number"] {
+            -moz-appearance: textfield; /* Firefox */
+        }
+
+
+        .overlay-date-time-section {
+            background-color: #3a3a3a;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 15px 15px 0 0;
+            margin: 0 20px;
+        }
+
+        .overlay-date-time-section > div { /* Direct children divs for spacing */
+            display: flex;
+            align-items: center;
+        }
+
+        .overlay-date-time-section i {
+            margin-right: 10px;
+            color: #d0d0d0;
+        }
+
+        .overlay-date-time-section span, .overlay-date-time-section input {
+            color: #f0e6d4;
+            font-weight: bold;
+            background: none;
+            border: none;
+            font-size: 1em;
+        }
+
+        .overlay-date-time-section input[type="time"] {
+            width: auto; /* Adjust time input width */
+        }
+
+
+        .overlay-category-section {
+            background-color: #3a3a3a;
+            padding: 15px 20px;
+            border-top: 1px solid #555;
+            margin: 0 20px;
+            display: grid; /* Changed to grid layout */
+            grid-template-columns: repeat(3, 1fr); /* 3 buttons per row */
+            gap: 10px; /* Spacing between buttons */
+        }
+
+        .overlay-category-button {
+            background-color: #303030;
+            border: none;
+            color: #d0d0d0;
+            padding: 10px 10px; /* Reduced padding for icon and text */
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            display: flex; /* Enable flex layout for icon and text */
+            flex-direction: column; /* Stack icon and text vertically */
+            align-items: center; /* Center items horizontally */
+            justify-content: center; /* Center items vertically */
+        }
+
+
+        .overlay-category-button i {
+            font-size: 1.5em; /* Icon size */
+            margin-bottom: 5px; /* Space between icon and text */
+        }
+
+
+        .overlay-input-section {
+            background-color: #3a3a3a;
+            padding: 20px;
+            margin: 0 20px;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .overlay-input-field {
+            background-color: #444;
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 15px;
+            width: 100%;
+            color: #f0e6d4;
+            box-sizing: border-box; /* Prevent padding from increasing width */
+        }
+
+        .overlay-input-field::placeholder {
+            color: #777;
+        }
+
+        .overlay-notes-field {
+            height: 80px; /* Example height for notes */
+            resize: vertical; /* Allow vertical resizing */
+        }
+
+        .overlay-attachment-button, .overlay-more-options-button {
+            background: none;
+            border: none;
+            color: #d0d0d0;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .overlay-attachment-button i {
+            margin-right: 10px;
+        }
+
+        .overlay-select-category-button {
+            background-color: #b8860b;
+            color: #fff;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            margin: 20px;
+            width: calc(100% - 40px); /* Adjust width to account for margins */
+        }
+        .overlay-button-container {
+            padding: 20px;
+            text-align: center; /* Center the button */
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header data-sr-reveal="enter top">
+            <h1>Transactions</h1>
+        </header>
+
+        <section class="transaction-container" data-sr-reveal="enter bottom">
+            <div class="transaction-list">
+                <p>No transactions yet</p>
+            </div>
+        </section>
+
+        <nav class="bottom-nav" data-sr-reveal="enter bottom">
+            <a href="index.html" class="nav-item">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </a>
+            <a href="transaction.html" class="nav-item active">
+                <i class="fa-solid fa-receipt"></i>
+                <span>Transactions</span>
+            </a>
+            <a href="budget.html" class="nav-item">
+                <i class="fa-solid fa-list-check"></i>  <span>Budgets</span>
+            </a>
+            <a href="more.html" class="nav-item">
+                <i class="fa-solid fa-ellipsis-h"></i>
+                <span>More</span>
+            </a>
+        </nav>
+        <a href="#" class="add-button" id="addTransactionBtn" data-sr-reveal="enter bottom">+</a>  <div class="add-transaction-overlay" id="addTransactionOverlay">  <div class="add-transaction-container">
+                <section class="overlay-header">
+                    <a href="#" id="closeOverlay"><i class="fa-solid fa-arrow-left"></i></a>
+                    <h1 id="overlayTitle">Add Transaction</h1>
+                    <div></div>
+                </section>
+
+                <section class="overlay-transaction-type">
+                    <button class="overlay-transaction-type-button active" data-transaction-type="expense">Expense</button>
+                    <button class="overlay-transaction-type-button" data-transaction-type="income">Income</button>
+                </section>
+
+                <section class="overlay-amount-section">
+                    <input type="number" id="transactionAmount" placeholder="0" value="0">
+                </section>
+
+                <section class="overlay-date-time-section">
+                    <div>
+                        <i class="fa-regular fa-calendar-days"></i>
+                        <input type="date" id="transactionDate" value="2025-02-22">
+                    </div>
+                    <div>
+                        <input type="time" id="transactionTime" value="23:10">
+                    </div>
+                </section>
+
+                <section class="overlay-category-section">
+                    <button class="overlay-category-button active" data-category="Dining"><i class="fa-solid fa-utensils"></i> Dining</button>
+                    <button class="overlay-category-button" data-category="Shopping"><i class="fa-solid fa-shopping-cart"></i> Shopping</button>
+                    <button class="overlay-category-button" data-category="Transit"><i class="fa-solid fa-bus"></i> Transit</button>
+                    <button class="overlay-category-button" data-category="Entertainment"><i class="fa-solid fa-film"></i> Entertainment</button>
+                    <button class="overlay-category-button" data-category="Bills & Fees"><i class="fa-solid fa-file-invoice-dollar"></i> Bills & Fees</button>
+                    <button class="overlay-category-button" data-category="Gifts"><i class="fa-solid fa-gift"></i> Gifts</button>
+                    <button class="overlay-category-button" data-category="Beauty"><i class="fa-solid fa-heart"></i> Beauty</button>
+                    <button class="overlay-category-button" data-category="Work"><i class="fa-solid fa-briefcase"></i> Work</button>
+                    <button class="overlay-category-button" data-category="Travel"><i class="fa-solid fa-plane"></i> Travel</button>
+                    <button class="overlay-category-button" data-category="Income"><i class="fa-solid fa-money-bill-wave"></i> Income</button>
+                </section>
+
+                <section class="overlay-input-section">
+                    <input type="text" class="overlay-input-field" id="transactionTitle" placeholder="Title">
+                    <textarea class="overlay-input-field overlay-notes-field" id="transactionNotes" placeholder="Notes"></textarea>
+                    <button class="overlay-attachment-button">
+                        <i class="fa-solid fa-paperclip"></i> Add attachment
+                    </button>
+                    <button class="overlay-more-options-button">
+                        More Options
+                    </button>
+                </section>
+
+                <div class="overlay-button-container">
+                    <button class="overlay-select-category-button" id="saveTransactionBtn">Save Transaction</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const addTransactionBtn = document.getElementById('addTransactionBtn');
+            const addTransactionOverlay = document.getElementById('addTransactionOverlay');
+            const closeOverlayBtn = document.getElementById('closeOverlay');
+            const saveTransactionBtn = document.getElementById('saveTransactionBtn');
+            const transactionListDiv = document.querySelector('.transaction-list');
+            const noTransactionsMessage = transactionListDiv.querySelector('p');
+            const overlayTitle = document.getElementById('overlayTitle'); // Overlay title
+            const saveButtonText = saveTransactionBtn.textContent; // Store default save button text
+            let transactions = [];
+            let currentTransactionType = 'expense'; // Default to expense
+            let currentCategory = 'Dining'; // Default category
+            let editTransactionIndex = null; // Track index of transaction being edited
+
+
+            // Category icon mapping
+            const categoryIcons = {
+                'Dining': 'fa-solid fa-utensils',
+                'Shopping': 'fa-solid fa-shopping-cart',
+                'Transit': 'fa-solid fa-bus',
+                'Entertainment': 'fa-solid fa-film',
+                'Bills & Fees': 'fa-solid fa-file-invoice-dollar',
+                'Gifts': 'fa-solid fa-gift',
+                'Beauty': 'fa-solid fa-heart',
+                'Work': 'fa-solid fa-briefcase',
+                'Travel': 'fa-solid fa-plane',
+                'Income': 'fa-solid fa-money-bill-wave'
+            };
+
+
+            // Function to load transactions from local storage
+            function loadTransactions() {
+                const storedTransactions = localStorage.getItem('transactions');
+                if (storedTransactions) {
+                    transactions = JSON.parse(storedTransactions);
+                }
+            }
+
+            // Function to save transactions to local storage
+            function saveTransactions() {
+                localStorage.setItem('transactions', JSON.stringify(transactions));
+            }
+
+            function displayTransactions() {
+                transactionListDiv.innerHTML = '';
+                if (transactions.length === 0) {
+                    transactionListDiv.appendChild(noTransactionsMessage);
+                    noTransactionsMessage.style.display = 'block';
+                } else {
+                    noTransactionsMessage.style.display = 'none';
+                    transactions.forEach((transaction, index) => {
+                        const transactionItem = document.createElement('div');
+                        transactionItem.classList.add('transaction-item');
+                        transactionItem.addEventListener('click', function() {
+                            openEditOverlay(index); // Open overlay for edit on transaction click
+                        });
+
+
+                        const detailsDiv = document.createElement('div');
+                        detailsDiv.classList.add('transaction-details');
+                        // Add category icon to transaction details
+                        const categoryIconClass = categoryIcons[transaction.category] || 'fa-solid fa-question'; // Default icon if category not found
+                        detailsDiv.innerHTML = `
+                            <i class="${categoryIconClass}"></i>
+                            <div>
+                                <p>${transaction.title}</p>
+                                <span>${transaction.category} - ${transaction.date} ${transaction.time}</span>
+                            </div>
+                        `;
+
+                        const amountDiv = document.createElement('div');
+                        amountDiv.classList.add('transaction-amount');
+                        amountDiv.classList.add(transaction.type);
+                        amountDiv.textContent = (transaction.type === 'income' ? '+' : '-') + '$' + transaction.amount;
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.classList.add('delete-button');
+                        deleteButton.innerHTML = '<i class="fa-solid fa-trash"></i>';
+                        deleteButton.addEventListener('click', function(event) {
+                            event.stopPropagation(); // Prevent transaction edit from opening when delete is clicked
+                            deleteTransaction(index);
+                        });
+
+
+                        transactionItem.appendChild(detailsDiv);
+                        transactionItem.appendChild(amountDiv);
+                        transactionItem.appendChild(deleteButton);
+                        transactionListDiv.appendChild(transactionItem);
+                    });
+                }
+            }
+
+            function deleteTransaction(index) {
+                transactions.splice(index, 1);
+                saveTransactions();
+                displayTransactions();
+            }
+
+            function openEditOverlay(index) {
+                editTransactionIndex = index; // Set the index of transaction being edited
+                overlayTitle.textContent = 'Edit Transaction'; // Change overlay title
+                saveTransactionBtn.textContent = 'Update Transaction'; // Change save button text
+
+                const transaction = transactions[index];
+
+                // Populate overlay fields with transaction details
+                document.getElementById('transactionAmount').value = transaction.amount;
+                document.getElementById('transactionDate').value = transaction.date;
+                document.getElementById('transactionTime').value = transaction.time;
+                document.getElementById('transactionTitle').value = transaction.title;
+                document.getElementById('transactionNotes').value = transaction.notes;
+
+                // Set transaction type
+                const typeButtons = document.querySelectorAll('.overlay-transaction-type-button');
+                typeButtons.forEach(button => {
+                    button.classList.remove('active');
+                    if (button.dataset.transactionType === transaction.type) {
+                        button.classList.add('active');
+                    }
+                });
+                currentTransactionType = transaction.type;
+
+
+                 // Set category
+                const categoryButtons = document.querySelectorAll('.overlay-category-button');
+                categoryButtons.forEach(button => {
+                    button.classList.remove('active');
+                    if (button.dataset.category === transaction.category) {
+                        button.classList.add('active');
+                    }
+                });
+                currentCategory = transaction.category;
+
+
+                addTransactionOverlay.style.display = 'flex'; // Show overlay
+            }
+
+            function resetOverlayFields() {
+                document.getElementById('transactionAmount').value = '0';
+                document.getElementById('transactionDate').value = '2025-02-22'; // Reset to default date if needed
+                document.getElementById('transactionTime').value = '23:10';    // Reset to default time if needed
+                document.getElementById('transactionTitle').value = '';
+                document.getElementById('transactionNotes').value = '';
+                overlayTitle.textContent = 'Add Transaction'; // Change overlay title back to default
+                saveTransactionBtn.textContent = saveButtonText; // Change save button text back to default
+                editTransactionIndex = null; // Clear edit index
+                // Reset transaction type and category to default (Expense & Dining)
+                const typeButtons = document.querySelectorAll('.overlay-transaction-type-button');
+                typeButtons.forEach(button => button.classList.remove('active'));
+                typeButtons[0].classList.add('active'); // Set Expense as default active
+                currentTransactionType = 'expense';
+                const categoryButtons = document.querySelectorAll('.overlay-category-button');
+                categoryButtons.forEach(button => button.classList.remove('active'));
+                categoryButtons[0].classList.add('active'); // Set Dining as default active
+                currentCategory = 'Dining';
+
+            }
+
+
+            // Load transactions on page load
+            loadTransactions();
+            displayTransactions();
+
+            // ** ADD TRANSACTION BUTTON EVENT LISTENER - CHECK THIS SECTION **
+            addTransactionBtn.addEventListener('click', function() {
+                resetOverlayFields(); // Reset fields every time add button is clicked
+                addTransactionOverlay.style.display = 'flex';
+            });
+
+            closeOverlayBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                addTransactionOverlay.style.display = 'none';
+                resetOverlayFields(); // Reset fields when overlay is closed
+            });
+
+            // Get the expense and income buttons
+            const transactionTypeButtons = document.querySelectorAll('.overlay-transaction-type-button');
+
+            // Transaction type button click listeners
+            transactionTypeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    transactionTypeButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    currentTransactionType = this.dataset.transactionType;
+                });
+            });
+
+             // Get the category buttons
+            const categoryButtons = document.querySelectorAll('.overlay-category-button');
+
+            // Category button click listeners
+            categoryButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    categoryButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    currentCategory = this.dataset.category;
+                });
+            });
+
+
+            saveTransactionBtn.addEventListener('click', function() {
+                const amountInput = document.getElementById('transactionAmount');
+                const amount = amountInput.value;
+                const dateInput = document.getElementById('transactionDate');
+                const timeInput = document.getElementById('transactionTime');
+                const transactionDate = dateInput.value;
+                const transactionTime = timeInput.value;
+                const title = document.getElementById('transactionTitle').value;
+                const notes = document.getElementById('transactionNotes').value;
+
+                if (editTransactionIndex !== null) {
+                    // Edit existing transaction
+                    transactions[editTransactionIndex] = {
+                        type: currentTransactionType,
+                        amount: amount,
+                        date: transactionDate,
+                        time: transactionTime,
+                        category: currentCategory,
+                        title: title,
+                        notes: notes
+                    };
+                    editTransactionIndex = null; // Clear edit index after update
+                } else {
+                    // Add new transaction
+                    const newTransaction = {
+                        type: currentTransactionType,
+                        amount: amount,
+                        date: transactionDate,
+                        time: transactionTime,
+                        category: currentCategory,
+                        title: title,
+                        notes: notes
+                    };
+                    transactions.push(newTransaction);
+                }
+
+
+                saveTransactions();
+                displayTransactions();
+                addTransactionOverlay.style.display = 'none';
+                resetOverlayFields(); // Reset overlay fields after saving
+                amountInput.value = '0'; // Reset amount input specifically, in case resetOverlayFields is adjusted later to not reset amount
+
+            });
+
+            window.addEventListener('click', function(event) {
+                if (event.target == addTransactionOverlay) {
+                    addTransactionOverlay.style.display = 'none';
+                    resetOverlayFields(); // Reset fields when overlay is closed by clicking outside
+                }
+            });
+
+            // ScrollReveal Configuration
+            ScrollReveal({ reset: true });
+
+            ScrollReveal().reveal('header', { delay: 200, origin: 'top', distance: '50px' });
+            ScrollReveal().reveal('.transaction-container', { delay: 300, origin: 'bottom', distance: '50px' });
+            ScrollReveal().reveal('.bottom-nav', { delay: 400, origin: 'bottom', distance: '50px' });
+            ScrollReveal().reveal('.add-button', { delay: 500, origin: 'bottom', distance: '50px' });
+
+        });
+    </script>
+</body>
+</html>
